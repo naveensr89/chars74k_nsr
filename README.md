@@ -5,7 +5,7 @@ This is submitted as project for [EE660 Course](https://classes.usc.edu/term-201
 This code is also used for [kaggle](https://www.kaggle.com/naveensr89) competition. 
 
 
-# Visualization
+## Visualization
 Few input images with their labels overalyed.
 
 ![Collage](Visual.png)
