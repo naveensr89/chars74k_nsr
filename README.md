@@ -6,8 +6,13 @@ This code is also used for [kaggle](https://www.kaggle.com/naveensr89) competiti
 
 
 # Visualization
+Few input images with their labels overalyed.
+
 ![Collage](Visual.png)
-Few images with their labels overalyed.
+
+
+
+Grayscale images used for training.
 
 ![Collage_gray](Visual_gray.png)
-Grayscale images used for training.
+
