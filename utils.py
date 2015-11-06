@@ -102,3 +102,11 @@ def save_out(y_te,labels_string, sorted_files, file_name):
     y_df.set_index('ID')
     y_df.to_csv(file_name,index=False, columns=['ID','Class'])
     return
+
+def print_accuracy(y1,y2, string):
+    if y1.shape != y2.shape:
+        return "Dimensions mismatch"
+
+    N = y1.shape[0]
+
+    print string+" Classification Error = " + str(sum(y1 != y2)*100.0/y1.shape[0]) + " %"

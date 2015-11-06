@@ -1,12 +1,6 @@
 __author__ = 'naveen'
 import numpy as np
 import cv2
-from sklearn import metrics, svm, cross_validation, preprocessing
-from sklearn.cross_validation import train_test_split
-from sklearn.grid_search import GridSearchCV
-from sklearn.metrics import classification_report
-from sklearn.svm import SVC
-from sklearn import linear_model
 
 def feature_exp(X):
     X_sums = feature_sums(X)
@@ -46,9 +40,5 @@ def feature_threshold(X):
     N = X.shape[0]
     d = np.sqrt(X.shape[1])
     T = 127
-    # X_add = np.zeros((N,d*d))
-    # for i in range(N):
-    #     img = (X[i,] > T)
-    #     X_add[i,] = img
     X_add = np.uint8((X > T)*255);
     return X_add

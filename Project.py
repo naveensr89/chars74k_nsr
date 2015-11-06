@@ -1,30 +1,19 @@
 __author__ = 'naveen'
 # Libs import
-from sklearn import metrics, svm, cross_validation, preprocessing
-from sklearn.cross_validation import train_test_split
-from sklearn.grid_search import GridSearchCV
-from sklearn.metrics import classification_report
-from sklearn.svm import SVC
+import numpy as np
+import time
+
+from sklearn import svm, preprocessing
 from sklearn import linear_model
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.cross_validation import train_test_split
 from sklearn.ensemble import AdaBoostClassifier
-from sklearn.utils.testing import all_estimators
 from sklearn.naive_bayes import GaussianNB
-from sklearn.naive_bayes import MultinomialNB
-
-import os
-import random
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import cv2
-import time
 
 # File imports
 from feature_expansion import feature_exp,feature_threshold
 from grid_search import  grid_search
-from utils import tile,read_X,read_y
+from utils import tile,read_X,read_y,save_out,print_accuracy
 
 ###### Read data and save to file ####
 # X_tr_orig, sorted_files_tr_orig = read_X('trainResized')
@@ -47,8 +36,8 @@ sorted_files_tr_orig = np.load('sorted_files_tr_orig.npy')
 sorted_files_te_orig = np.load('sorted_files_te_orig.npy')
 
 ####################### Display Random images from Training set as collage  ######################
-tile(600,600,10,10,X_tr_orig,y_tr_orig, labels_string)
-tile(600,600,10,10,'train',y_tr_orig, labels_string,1)
+# tile(600,600,10,10,X_tr_orig,y_tr_orig, labels_string)
+# tile(600,600,10,10,'train',y_tr_orig, labels_string,1)
 
 ###### Split train and test #########
 X_tr, X_te, y_tr, y_te, sorted_files_tr, sorted_files_te = \
@@ -59,6 +48,7 @@ N_te = X_te.shape[0]
 D = X_tr.shape[1]
 print "Training : [Inputs x Features ] = [%d x %d]" % (N_tr,D)
 print "Test     : [Inputs x Features ] = [%d x %d]" % (N_te,D)
+print "\n "
 
 ####################### Feature Expansion ################################
 X_tr = feature_exp(X_tr)
@@ -66,7 +56,7 @@ X_te = feature_exp(X_te)
 D = X_tr.shape[1]
 print "After Feature Expansion: Training : [Inputs x Features ] = [%d x %d]" % (N_tr,D)
 print "After Feature Expansion: Test     : [Inputs x Features ] = [%d x %d]" % (N_te,D)
-
+print "\n "
 
 ###################### Normalizing data ##################################
 scaler = preprocessing.StandardScaler().fit(X_tr)
@@ -74,100 +64,108 @@ X_tr_n = scaler.transform(X_tr)
 X_te_n = scaler.transform(X_te)
 
 start = time.time()
-print start
-####################### C SVM - Accuracy - 0.44503 #############################
-# clf = svm.SVC()
-# clf.fit(X_tr_n, y_tr)
-# y_tr_p = clf.predict(X_tr_n)
-# print "Traning Classification Error = %f \%" % (sum(y_tr_p != y_tr)*100.0/N_tr)
-# y_te_p = clf.predict(X_te_n)
-# save_out(y_te_p,labels_string,sorted_files_te,'testLabels_CSVM.csv')
+print time.ctime()
 
-####################### C SVM L1 - Accuracy - 0.44503 #############################
-# clf = svm.LinearSVC(penalty='l1',dual=False)
-# clf.fit(X_tr_n, y_tr)
-# y_tr_p = clf.predict(X_tr_n)
-# print "Traning Classification Error = %f " % (sum(y_tr_p != y_tr)*100.0/N_tr)
-# y_te_p = clf.predict(X_te_n)
-# print "Test    Classification Error = %f " % (sum(y_te_p != y_te)*100.0/N_te)
+########################### List of Classifiers #################################
+# c_svm
+# c_svm_l1
+# log_reg
+# c_svm_param
+# knn
+# naive_bayes
+# ols
+# ridge_reg
+# lasso
+# adaboost
 
-####################### Logistic regression #############################
-# clf = linear_model.LogisticRegression()
-# clf.fit(X_tr_n, y_tr)
-# y_tr_p = clf.predict(X_tr_n)
-# print "Traning Classification Error = %f " % (sum(y_tr_p != y_tr)*100.0/N_tr)
-# y_te_p = clf.predict(X_te_n)
-# print "Test    Classification Error = %f " % (sum(y_te_p != y_te)*100.0/N_te)
+classifier = "c_svm_param"
 
-####################### C SVM Param - Accuracy - 0.50164 #############################
-# grid_search(X_tr_n,y_tr)
+if(classifier == "c_svm"):
+    ###################### C SVM - Accuracy - 0.44503 #############################
+    model = svm.SVC()
+    model.fit(X_tr_n, y_tr)
+    y_tr_p = model.predict(X_tr_n)
+    y_te_p = model.predict(X_te_n)
+    # save_out(y_te_p,labels_string,sorted_files_te,'testLabels_CSVM.csv')
 
-# clf = svm.SVC(C=10,kernel='rbf',gamma=0.001)
-# clf.fit(X_tr_n, y_tr)
-# y_tr_p = clf.predict(X_tr_n)
-# y_te_p = clf.predict(X_te_n)
-# #save_out(y_te_p,labels_string,sorted_files_te,'testLabels_CSVM_Param.csv')
-# save_out(y_te_p,labels_string,sorted_files_te,'testLabels_CSVM_Param_feature_exp.csv')
-# print "Traning Classification Error = %f " % (sum(y_tr_p != y_tr)*100.0/N_tr)
-# print "Test    Classification Error = %f " % (sum(y_te_p != y_te)*100.0/N_te)
+elif(classifier == "c_svm_l1"):
+    ###################### C SVM L1 - Accuracy - 0.44503 #############################
+    model = svm.LinearSVC(penalty='l1',dual=False)
+    model.fit(X_tr_n, y_tr)
+    y_tr_p = model.predict(X_tr_n)
+    y_te_p = model.predict(X_te_n)
 
-####################### KNN - Accuracy -  #############################
-# neigh = KNeighborsClassifier(n_neighbors=5)
-# neigh.fit(X_tr_n, y_tr)
-# y_tr_p = neigh.predict(X_tr_n)
-# y_te_p = neigh.predict(X_te_n)
-# #save_out(y_te_p,labels_string,sorted_files_te,'testLabels_kNN_feature_exp.csv')
-# print "Traning Classification Error = %f " % (sum(y_tr_p != y_tr)*100.0/N_tr)
-# print "Test    Classification Error = %f " % (sum(y_te_p != y_te)*100.0/N_te)
+elif(classifier == "log_reg"):
+    ###################### Logistic regression #############################
+    model = linear_model.LogisticRegression()
+    model.fit(X_tr_n, y_tr)
+    y_tr_p = model.predict(X_tr_n)
+    y_te_p = model.predict(X_te_n)
 
-####################### Naive Bayes - Accuracy -  #############################
-# gnb = GaussianNB()
-# gnb.fit(X_tr_n,y_tr)
-# y_tr_p = gnb.predict(X_tr_n)
-# y_te_p = gnb.predict(X_te_n)
-# print "Traning Classification Error = %f " % (sum(y_tr_p != y_tr)*100.0/N_tr)
-# print "Test    Classification Error = %f " % (sum(y_te_p != y_te)*100.0/N_te)
+elif(classifier == "c_svm_param"):
+    ###################### C SVM Param - Accuracy - 0.50164 #############################
+    # grid_search(X_tr_n,y_tr)
 
-####################### OLS - Accuracy -  #############################
-# clf = linear_model.LinearRegression()
-# clf.fit(X_tr_n,y_tr)
-# y_tr_p = clf.predict(X_tr_n)
-# y_tr_p = np.round(y_tr_p)
-# print "Traning Classification Error = %f " % (sum(y_tr_p != y_tr)*100.0/N_tr)
+    model = svm.SVC(C=10,kernel='rbf',gamma=0.001)
+    model.fit(X_tr_n, y_tr)
+    y_tr_p = model.predict(X_tr_n)
+    y_te_p = model.predict(X_te_n)
+    # save_out(y_te_p,labels_string,sorted_files_te,'testLabels_CSVM_Param_feature_exp.csv')
 
-####################### Ridge Regression - Accuracy -  #############################
-# clf = linear_model.Ridge(alpha=0.001)
-# clf.fit(X_tr_n,y_tr)
-# y_tr_p = clf.predict(X_tr_n)
-# y_tr_p = np.round(y_tr_p)
-# print "Traning Classification Error = %f " % (sum(y_tr_p != y_tr)*100.0/N_tr)
+elif(classifier == "knn"):
+    ###################### KNN - Accuracy -  #############################
+    model = KNeighborsClassifier(n_neighbors=5)
+    model.fit(X_tr_n, y_tr)
+    y_tr_p = model.predict(X_tr_n)
+    y_te_p = model.predict(X_te_n)
+    # save_out(y_te_p,labels_string,sorted_files_te,'testLabels_kNN_feature_exp.csv')
 
-####################### Lasso - Accuracy -  #############################
-# clf = linear_model.Lasso(alpha=.15,max_iter=-1)
-# clf.fit(X_tr_n,y_tr)
-# y_tr_p = clf.predict(X_tr_n)
-# y_tr_p = np.round(y_tr_p)
-# print "Traning Classification Error = %f " % (sum(y_tr_p != y_tr)*100.0/N_tr)
+elif(classifier == "naive_bayes"):
+    ###################### Naive Bayes - Accuracy -  #############################
+    model = GaussianNB()
+    model.fit(X_tr_n, y_tr)
+    y_tr_p = model.predict(X_tr_n)
+    y_te_p = model.predict(X_te_n)
 
-####################### Ridge Regression + polynomial features - Accuracy -  #############################
-####################### Memory Error #####################################################################
-# poly = preprocessing.PolynomialFeatures(interaction_only=True)
-# X_tr_n_p = poly.fit_transform(X_tr_n,y_tr)
-# clf = linear_model.Ridge(alpha=0.1)
-# clf.fit(X_tr_n_p,y_tr)
-# y_tr_p = clf.predict(X_tr_n_p)
-# y_tr_p = np.round(y_tr_p)
-# print "Traning Classification Error = %f " % (sum(y_tr_p != y_tr)*100.0/N_tr)
+elif(classifier == "ols"):
+    ###################### OLS - Accuracy -  #############################
+    model = linear_model.LinearRegression()
+    model.fit(X_tr_n,y_tr)
+    y_tr_p = model.predict(X_tr_n)
+    y_tr_p = np.round(y_tr_p)
+    y_te_p = model.predict(X_te_n)
+    y_te_p = np.round(y_te_p)
 
-####################### AdaBoost #####################################################################
-# clf = AdaBoostClassifier(KNeighborsClassifier(),n_estimators=100,algorithm='SAMME')
-# clf.fit(X_tr_n,y_tr)
-# y_tr_p = clf.predict(X_tr_n)
-# y_te_p = clf.predict(X_te_n)
-# print "Traning Classification Error = %f " % (sum(y_tr_p != y_tr)*100.0/N_tr)
-# print "Test    Classification Error = %f " % (sum(y_te_p != y_te)*100.0/N_te)
+elif(classifier == "ridge_reg"):
+    ###################### Ridge Regression - Accuracy -  #############################
+    model = linear_model.Ridge(alpha=0.001)
+    model.fit(X_tr_n,y_tr)
+    y_tr_p = model.predict(X_tr_n)
+    y_tr_p = np.round(y_tr_p)
+    y_te_p = model.predict(X_te_n)
+    y_te_p = np.round(y_te_p)
 
+elif(classifier == "lasso"):
+    ###################### Lasso - Accuracy -  #############################
+    model = linear_model.Lasso(alpha=.15,max_iter=-1)
+    model.fit(X_tr_n,y_tr)
+    y_tr_p = model.predict(X_tr_n)
+    y_tr_p = np.round(y_tr_p)
+    y_te_p = model.predict(X_te_n)
+    y_te_p = np.round(y_te_p)
+
+elif(classifier == "adaboost"):
+    ###################### AdaBoost ###########################################
+    model = AdaBoostClassifier(KNeighborsClassifier(),n_estimators=100,algorithm='SAMME')
+    model.fit(X_tr_n,y_tr)
+    y_tr_p = model.predict(X_tr_n)
+    y_te_p = model.predict(X_te_n)
+
+
+print "\n"
+print_accuracy(y_tr, y_tr_p, "Training")
+print_accuracy(y_te, y_te_p, "Test")
 
 end = time.time()
-print "Time taken in sec %f" % (end-start)
+print "\nTime taken in sec %f" % (end-start)
 
