@@ -8,11 +8,11 @@ This code is also used for [kaggle](https://www.kaggle.com/naveensr89) competiti
 ## Visualization
 Few input images with their labels overalyed.
 
-![Collage](Visual.png)
+![Collage](other/Visual.png)
 
 
 
 Grayscale images used for training.
 
-![Collage_gray](Visual_gray.png)
+![Collage_gray](other/Visual_gray.png)
 
