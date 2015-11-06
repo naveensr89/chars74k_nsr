@@ -5,3 +5,9 @@ This is submitted as project for [EE660 Course](https://classes.usc.edu/term-201
 This code is also used for [kaggle](https://www.kaggle.com/naveensr89) competition. 
 
 
+# Visualization
+![Collage](Visual.png)
+Few images with their labels overalyed.
+
+![Collage_gray](Visual_gray.png)
+Grayscale images used for training.
