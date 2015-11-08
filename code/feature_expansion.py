@@ -1,6 +1,7 @@
 __author__ = 'naveen'
 import numpy as np
 import cv2
+from skimage.feature import hog
 
 def feature_exp(X):
     X_sums = feature_sums(X)
@@ -8,8 +9,9 @@ def feature_exp(X):
     X_th = feature_threshold(X)
     X_s = feature_sobel(X)
     X_m = feature_moments(X)
+    X_hog = feature_HOG(X)
     # X_new = np.concatenate((X,X_sums,X_scales, X_th, X_s),axis=1)
-    X_new = np.concatenate((X,X_sums, X_scales, X_th, X_s, X_m),axis=1)
+    X_new = X_hog
     return X_new
 
 def feature_sums(X):
@@ -65,4 +67,20 @@ def feature_moments(X):
         img = cv2.moments(img,False)
         #print img['nu20'], img['nu11'], img['nu02'], img['nu30'], img['nu21'], img['nu12'], img['nu03']
         X_add[i,] = np.array([img['nu20'], img['nu11'], img['nu02'], img['nu30'], img['nu21'], img['nu12'], img['nu03']])
+    return X_add
+
+def feature_HOG(X):
+    N = X.shape[0]
+    d = np.sqrt(X.shape[1])
+    # X_add = np.zeros((N,32))
+    X_add = np.zeros((N,288))
+    # Setup HOG descriptor
+    for i in range(N):
+        img = X[i,]
+        img = img.reshape((d,d))
+        # h = hog(img, orientations=8, pixels_per_cell=(10, 10),
+        #             cells_per_block=(2, 2), visualise=False, normalise=True)
+        h = hog(img, orientations=8, pixels_per_cell=(5, 5),
+                    cells_per_block=(2, 2), visualise=False, normalise=True)
+        X_add[i,] = h
     return X_add

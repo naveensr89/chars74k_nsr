@@ -5,10 +5,13 @@ import time
 
 from sklearn import svm, preprocessing
 from sklearn import linear_model
+from sklearn.tree import  DecisionTreeClassifier
+from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.cross_validation import train_test_split
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.naive_bayes import GaussianNB
+from sklearn.ensemble import RandomForestClassifier
 
 # File imports
 from feature_expansion import feature_exp,feature_threshold,feature_sobel, feature_moments
@@ -20,7 +23,7 @@ display_collage = 0
 submission = 0
 
 # classifier = "none"
-classifier = "log_reg"
+classifier = "random_forest"
 
 ########################### List of Classifiers #################################
 # c_svm
@@ -33,6 +36,8 @@ classifier = "log_reg"
 # ridge_reg
 # lasso
 # adaboost
+# voting
+# random_forest
 
 if load_from_folder:
     ###### Read data and save to file ####
@@ -128,7 +133,7 @@ elif(classifier == "c_svm_param"):
 
 elif(classifier == "knn"):
     ###################### KNN - Accuracy -  #############################
-    model = KNeighborsClassifier(n_neighbors=5)
+    model = KNeighborsClassifier(n_neighbors=2)
     model.fit(X_tr_n, y_tr)
     y_tr_p = model.predict(X_tr_n)
     y_te_p = model.predict(X_te_n)
@@ -169,10 +174,27 @@ elif(classifier == "lasso"):
 
 elif(classifier == "adaboost"):
     ###################### AdaBoost ###########################################
-    model = AdaBoostClassifier(KNeighborsClassifier(),n_estimators=100,algorithm='SAMME')
+    model = AdaBoostClassifier(KNeighborsClassifier(n_neighbors=1),n_estimators=200,learning_rate=1, algorithm="SAMME")
     model.fit(X_tr_n,y_tr)
     y_tr_p = model.predict(X_tr_n)
     y_te_p = model.predict(X_te_n)
+
+# elif(classifier == "voting"):
+    # clf1 = DecisionTreeClassifier(max_depth=4)
+    # clf2 = KNeighborsClassifier(n_neighbors=7)
+    # clf3 = SVC(kernel='rbf', probability=True)
+    # model = VotingClassifier(estimators=[('dt', clf1), ('knn', clf2), ('svc', clf3)], voting='soft', weights=[2,1,2])
+    # model.fit(X_tr_n,y_tr)
+    # y_tr_p = model.predict(X_tr_n)
+    # y_te_p = model.predict(X_te_n)
+
+elif(classifier == "random_forest"):
+    ###################### Random Forest ###########################################
+    model =  RandomForestClassifier(n_estimators=1000,n_jobs=4)
+    model.fit(X_tr_n,y_tr)
+    y_tr_p = model.predict(X_tr_n)
+    y_te_p = model.predict(X_te_n)
+
 
 else:
     print "No Classifier selected"
@@ -187,7 +209,7 @@ if classifier_id != -1:
     if submission != 1:
         print_accuracy(y_te, y_te_p, "Test")
     else:
-        save_out(y_te_p,labels_string,sorted_files_te,'submission/testLabels_CSVM_Param_feature_exp_moments.csv')
+        save_out(y_te_p,labels_string,sorted_files_te,'submission/testLabels_svm_hog_5x5.csv')
 
 end = time.time()
 print "\nTime taken in sec %f" % (end-start)
