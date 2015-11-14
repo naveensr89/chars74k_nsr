@@ -21,7 +21,7 @@ def grid_search(X_tr_n,y_tr):
         print("# Tuning hyper-parameters for %s" % score)
         print()
 
-        clf = GridSearchCV(SVC(C=1), tuned_parameters, cv=5,
+        clf = GridSearchCV(SVC(C=1), tuned_parameters, cv=4,
                            scoring='%s_weighted' % score, n_jobs=4)
         clf.fit(X_train, y_train)
 

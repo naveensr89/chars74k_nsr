@@ -17,13 +17,16 @@ from sklearn.ensemble import RandomForestClassifier
 from feature_expansion import feature_exp,feature_threshold,feature_sobel, feature_moments
 from grid_search import  grid_search
 from utils import tile,read_X,read_y,save_out,print_accuracy
+from tf import tensorFlowNN
+from keras_CNN import  keras_CNN
+
 
 load_from_folder = 0
 display_collage = 0
-submission = 0
+submission = 1
 
 # classifier = "none"
-classifier = "random_forest"
+classifier = "nn"
 
 ########################### List of Classifiers #################################
 # c_svm
@@ -38,6 +41,9 @@ classifier = "random_forest"
 # adaboost
 # voting
 # random_forest
+
+start = time.time()
+print time.ctime()
 
 if load_from_folder:
     ###### Read data and save to file ####
@@ -79,21 +85,24 @@ N_te = X_te.shape[0]
 D = X_tr.shape[1]
 print "Training : [Inputs x Features ] = [%d x %d]" % (N_tr,D)
 print "Test     : [Inputs x Features ] = [%d x %d]" % (N_te,D)
-print "\n"
 
 ####################### Feature Expansion ################################
-X_tr = feature_exp(X_tr)
-X_te = feature_exp(X_te)
+if classifier!="nn":
+    X_tr = feature_exp(X_tr)
+    X_te = feature_exp(X_te)
 D = X_tr.shape[1]
 
 print "After Feature Expansion: Training : [Inputs x Features ] = [%d x %d]" % (N_tr,D)
 print "After Feature Expansion: Test     : [Inputs x Features ] = [%d x %d]" % (N_te,D)
-print "\n"
 
 ###################### Normalizing data ##################################
 scaler = preprocessing.StandardScaler().fit(X_tr)
 X_tr_n = scaler.transform(X_tr)
 X_te_n = scaler.transform(X_te)
+
+
+end = time.time()
+print "\nTime taken for Data preparation = %f sec" % (end-start)
 
 start = time.time()
 print time.ctime()
@@ -124,9 +133,10 @@ elif(classifier == "log_reg"):
 
 elif(classifier == "c_svm_param"):
     ###################### C SVM Param - Accuracy - 0.50164 #############################
-    # grid_search(X_tr_n,y_tr)
+    best_params = grid_search(X_tr_n,y_tr)
+    print best_params
 
-    model = svm.SVC(C=10,kernel='rbf',gamma=0.001)
+    model = svm.SVC(C=best_params['C'],kernel=best_params['kernel'],gamma=best_params['gamma'])
     model.fit(X_tr_n, y_tr)
     y_tr_p = model.predict(X_tr_n)
     y_te_p = model.predict(X_te_n)
@@ -195,6 +205,10 @@ elif(classifier == "random_forest"):
     y_tr_p = model.predict(X_tr_n)
     y_te_p = model.predict(X_te_n)
 
+elif(classifier == "nn"):
+    ############################### NN ###################################
+    # tensorFlowNN(X_tr,y_tr,X_te,y_te)
+    y_tr_p, y_te_p = keras_CNN(X_tr, y_tr, X_te)
 
 else:
     print "No Classifier selected"
@@ -209,8 +223,8 @@ if classifier_id != -1:
     if submission != 1:
         print_accuracy(y_te, y_te_p, "Test")
     else:
-        save_out(y_te_p,labels_string,sorted_files_te,'submission/testLabels_svm_hog_5x5.csv')
+        save_out(y_te_p,labels_string,sorted_files_te,'submission/testLabels_keras_CNN.csv')
 
 end = time.time()
-print "\nTime taken in sec %f" % (end-start)
+print "\nTime taken by classifier = %f sec" % (end-start)
 
