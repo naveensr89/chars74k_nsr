@@ -3,17 +3,23 @@ from sklearn.cross_validation import train_test_split
 from sklearn.grid_search import GridSearchCV
 from sklearn.metrics import classification_report
 from sklearn.svm import SVC
+import numpy as np
 
 def grid_search(X_tr_n,y_tr):
 
+    # Set the parameters by cross-validation
+    tuned_parameters = [{'kernel': ['rbf'], 'gamma': np.logspace(-4, 2, 5),
+                         'C': np.logspace(-3, 2, 6)}]
+                        #{'kernel': ['linear'], 'C': np.logspace(-3, 2, 6)}]
+
+    clf = GridSearchCV(SVC(), tuned_parameters, cv=3, n_jobs=4)
+    clf.fit(X_tr_n, y_tr)
+
+    return clf
+
     # Split the dataset in two equal parts
     X_train, X_test, y_train, y_test = train_test_split(
-        X_tr_n, y_tr, test_size=0.5, random_state=0)
-
-    # Set the parameters by cross-validation
-    tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
-                         'C': [1, 10, 100, 1000]},
-                        {'kernel': ['linear'], 'C': [1, 10, 100, 1000]}]
+        X_tr_n, y_tr, test_size=0.85, random_state=0)
     # scores = ['precision', 'recall']
     scores = ['recall']
 
@@ -45,4 +51,4 @@ def grid_search(X_tr_n,y_tr):
         print(classification_report(y_true, y_pred))
         print()
 
-    return clf.best_params_
+    return clf

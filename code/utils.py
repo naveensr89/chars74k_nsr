@@ -4,8 +4,31 @@ import random
 import numpy as np
 import pandas as pd
 import cv2
+import matplotlib.pyplot as plt
 
-def tile(wd,ht,rows,cols,input,y_tr, labels_string, color=0):
+from sklearn.cross_validation import train_test_split
+from skimage.feature import hog
+
+def get_HOG_image(X):
+    N = X.shape[0]
+    d = np.sqrt(X.shape[1])
+    # X_add = np.zeros((N,32))
+    X_hog = np.zeros((N,400))
+    # Setup HOG descriptor
+    for i in range(N):
+        img = X[i,]
+        img = img.reshape((d,d))
+        h,h_img = hog(img, orientations=8, pixels_per_cell=(5, 5),
+                    cells_per_block=(2, 2), visualise=True, normalise=True)
+        h_img = h_img.flatten()
+        a = h_img.min()
+        b = h_img.max()
+        h_img = (h_img - a)/(b-a) * 255
+        h_img = h_img.astype('uint8')
+        X_hog[i,] = h_img
+    return X_hog
+
+def tile(ht,wd,rows,cols,input,y_tr, labels_string, overlay_label, random_state, color=0):
     if(isinstance(input,str)):
         folder = input
         files = [f for f in os.listdir(folder) if f.endswith(".Bmp")]
@@ -20,45 +43,52 @@ def tile(wd,ht,rows,cols,input,y_tr, labels_string, color=0):
         print "Pass either folder or Input matrix X in input"
         return
 
-    if folder_passed == 1 and color == 1:
-        out = np.zeros((ht,wd,3),dtype=np.uint8)
-        clr_idx = cv2.IMREAD_COLOR
-    else:
-        out = np.zeros((ht,wd),dtype=np.uint8)
-        clr_idx = cv2.IMREAD_GRAYSCALE
-
     iwd = wd / cols
     iht = ht / rows
+    gap = 5
+
+    if folder_passed == 1 and color == 1:
+        out = np.ones((ht + (rows+1)*gap,wd +(cols+1)*gap ,3),dtype=np.uint8)*255
+        clr_idx = cv2.IMREAD_COLOR
+    else:
+        out = np.ones((ht + (rows+1)*gap,wd +(cols+1)*gap),dtype=np.uint8)*255
+        clr_idx = cv2.IMREAD_GRAYSCALE
 
     # overlay Text font
     font = cv2.FONT_HERSHEY_TRIPLEX
 
+    np.random.seed(random_state)
+
     for row in range(rows):
         for col in range(cols):
-            idx = random.randint(0,numfiles)
+            idx = np.random.randint(0,numfiles)
             label = labels_string[y_tr[idx]]
             if folder_passed == 1:
                 fname = os.path.splitext(files[idx])[0]
                 # print idx,files[idx]
                 # print fname,label
                 img = cv2.imread(folder+'/'+files[idx],clr_idx)
-                img = cv2.resize(img,(iht,iwd),interpolation = cv2.INTER_CUBIC)
+                img = cv2.resize(img,(iwd,iht),interpolation = cv2.INTER_CUBIC)
             else:
                 img = X[idx,]
                 d = np.sqrt(X.shape[1])
                 img = img.reshape((d,d)) # Assuming square image
-                img = cv2.resize(img,(iht,iwd),interpolation = cv2.INTER_LINEAR)
+                img = cv2.resize(img,(iwd,iht),interpolation = cv2.INTER_LINEAR)
 
-            cv2.putText(img,label,(0,3*iht/4), font, 1,(255,255,255),1,cv2.LINE_AA)
+            if overlay_label == 1:
+                cv2.putText(img,label,(0,3*iht/4), font, 1,(255,255,255),1,cv2.LINE_AA)
 
             if folder_passed == 1 and color == 1:
-                out[row*iht:(row+1)*iht,col*iwd:(col+1)*iwd,] = img
+                out[row*iht+(row+1)*gap:(row+1)*iht+(row+1)*gap,col*iwd+(col+1)*gap:(col+1)*iwd+(col+1)*gap,] = img
             else:
-                out[row*iht:(row+1)*iht,col*iwd:(col+1)*iwd] = img
+                out[row*iht+(row+1)*gap:(row+1)*iht+(row+1)*gap,col*iwd+(col+1)*gap:(col+1)*iwd+(col+1)*gap] = img
 
-    cv2.imshow('Collage',out)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    plt.imshow(out)
+    plt.axis('off')
+    plt.show()
+    # cv2.imshow('Collage',out)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
     return out
 
 def read_X(folder):
@@ -77,6 +107,18 @@ def read_X(folder):
         f = sorted_files[i]
         img = cv2.imread(folder+'/'+f,0)
         X[i,] = img.flatten()
+
+    return X, sorted_files
+
+def read_X_full_res(folder):
+    files = [f for f in os.listdir(folder) if f.endswith(".Bmp")]
+    sorted_files = sorted(files, key=lambda x: int(x.split('.')[0]))
+    N = files.__len__()
+    X = []
+    for i in range(N):
+        f = sorted_files[i]
+        img = cv2.imread(folder+'/'+f,cv2.IMREAD_GRAYSCALE)
+        X.append(img)
 
     return X, sorted_files
 
@@ -109,4 +151,46 @@ def print_accuracy(y1,y2, string):
 
     N = y1.shape[0]
 
-    print string+" Classification Error = " + str(sum(y1 != y2)*100.0/y1.shape[0]) + " %"
+    print string+" Classification Accuracy = " + str(100 - (sum(y1 != y2)*100.0/y1.shape[0])) + " %"
+
+def load(load_from_folder, display_collage, submission):
+
+    if load_from_folder:
+        ###### Read data and save to file ####
+        X_tr_orig, sorted_files_tr_orig = read_X('../data/trainResized')
+        X_te_orig, sorted_files_te_orig = read_X('../data/testResized')
+        y_tr_orig,labels_string = read_y('../data/trainLabels.csv')
+
+        np.save('../other/X_tr_orig',X_tr_orig)
+        np.save('../other/X_te_orig',X_te_orig)
+        np.save('../other/y_tr_orig',y_tr_orig)
+        np.save('../other/labels_string',labels_string)
+        np.save('../other/sorted_files_tr_orig',sorted_files_tr_orig)
+        np.save('../other/sorted_files_te_orig',sorted_files_te_orig)
+
+    else:
+        ###### Read data from saved file ####
+        X_tr_orig = np.load('../other/X_tr_orig.npy')
+        X_te_orig = np.load('../other/X_te_orig.npy')
+        y_tr_orig = np.load('../other/y_tr_orig.npy')
+        labels_string = np.load('../other/labels_string.npy')
+        sorted_files_tr_orig = np.load('../other/sorted_files_tr_orig.npy')
+        sorted_files_te_orig = np.load('../other/sorted_files_te_orig.npy')
+
+    if display_collage:
+        ##### display HOG ####
+        X_hog = get_HOG_image(X_tr_orig)
+        tile(600,600,10,10,X_hog,y_tr_orig,labels_string, 1, 42)
+        ####################### Display Random images from Training set as collage  ######################
+        # tile(600,600,10,10,X_tr_orig,y_tr_orig, labels_string,1, 42)
+        # tile(600,600,10,10,'data/train',y_tr_orig, labels_string, 1, 42, 1)
+
+    if submission != 1:
+        ###### Split train and test #########
+        X_tr, X_te, y_tr, y_te, sorted_files_tr, sorted_files_te = \
+            train_test_split(X_tr_orig, y_tr_orig,sorted_files_tr_orig, test_size=0.20, random_state=42)
+    else:
+        X_tr, X_te, y_tr, sorted_files_tr, sorted_files_te = \
+            X_tr_orig, X_te_orig, y_tr_orig, sorted_files_tr_orig, sorted_files_te_orig
+
+    return X_tr, X_te, y_tr, y_te, sorted_files_tr, sorted_files_te
