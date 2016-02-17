@@ -3,7 +3,7 @@ Repository structure
 
 code
 - Project.py           - Entry point into project. Modify classifier in code and run
-- bow.py	             - Bag of words
+- bow.py               - Bag of words
 - cnn.py               - CNN (Convolutional Neural Network) training code
 - cnn_test.py          - CNN testing
 - cnn_visualize.py     - Code to visualize Weights, convolution output of CNN
